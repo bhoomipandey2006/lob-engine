@@ -1,4 +1,4 @@
-# lob-engine — Price-Time Priority Limit Order Book
+# lob-engine: Price-Time Priority Limit Order Book
 
 A limit order book and matching engine in C++17, built to benchmark matching
 latency at the microsecond/nanosecond level rather than to trade real capital.
@@ -8,7 +8,7 @@ simple strategy running against it.
 ## Why this exists
 
 Most of my other work (ARMCE, NSE Calendar Anomaly Scanner) is offline
-statistical research in Python — regime detection, volatility modeling,
+statistical research in Python, regime detection, volatility modeling,
 hypothesis testing. This project is deliberately the opposite: a
 single-purpose, low-latency C++ core with no external dependencies, built to
 demonstrate the execution-engineering side that pure research projects don't.
@@ -17,7 +17,7 @@ demonstrate the execution-engineering side that pure research projects don't.
 
 - Price-time priority matching: best bid = highest price, best ask = lowest
   price, FIFO within a price level.
-- Prices stored as `int64_t` ticks, never `double` — avoids float-equality
+- Prices stored as `int64_t` ticks, never `double`, avoids float-equality
   bugs in a matching engine.
 - O(1) order cancellation via an id -> location index, instead of scanning
   the book.
@@ -30,7 +30,7 @@ demonstrate the execution-engineering side that pure research projects don't.
 make run
 ```
 
-No external dependencies — just a C++17 compiler. Runs a correctness demo
+No external dependencies, just a C++17 compiler. Runs a correctness demo
 (a few orders, trades printed so you can eyeball the matching logic), then
 a 1,000,000-order latency benchmark.
 
@@ -45,12 +45,12 @@ throughput: ~5.2M orders/sec (single thread)
 ```
 
 **Honest caveat:** the `max` latency in a raw run can spike into the
-milliseconds (observed once, ~11ms) — that's OS scheduling jitter (page
+milliseconds (observed once, ~11ms), that's OS scheduling jitter (page
 faults, context switches), not the matching engine itself being slow. A
 production latency benchmark would pin the process to a core and exclude
 warmup, GC-equivalent, and OS-noise outliers before reporting a "real" tail
 number. p99/p99.9 are reported here specifically because they're far more
-robust to that noise than `max` is — reporting `max` from an unpinned,
+robust to that noise than `max` is, reporting `max` from an unpinned,
 un-isolated benchmark without that caveat would be a **red flag** in an
 interview, so it's better you know that now than have an interviewer catch
 it.
@@ -77,9 +77,11 @@ depth       optimized (ns)    naive (ns)        speedup
 The optimized book (price-sorted `std::map` + FIFO `std::deque`) stays close
 to flat because finding the best price is an O(1) lookup (`begin()`).
 The naive book scans every resting order to find the best price, so its
-latency grows roughly linearly with book depth — at 200,000 resting orders
+latency grows roughly linearly with book depth, at 200,000 resting orders
 it's over 1,000x slower for the exact same trade. This is the concrete
 argument for the design, not just an assertion that it's "optimized."
+
+![Matching latency vs book depth, naive vs indexed](assets/scaling_plot.png)
 
 Run it yourself: `make run-scaling`
 
@@ -91,17 +93,17 @@ of uniform random noise.
 
 **Be precise about what this is and isn't:** genuine order-by-order L2
 depth data isn't publicly available to a student without a paid vendor feed
-or exchange membership — that's a real constraint, not something to paper
+or exchange membership, that's a real constraint, not something to paper
 over. What's real here is the 15-second price *path* itself. For each bar,
 the program submits orders that walk through that bar's actual
 Open → Low/High → High/Low → Close range (direction chosen by whether the
 bar closed up or down), so every trade price in the simulation is anchored
-to a real, timestamped NSE price — not invented. This is a named technique
+to a real, timestamped NSE price, not invented. This is a named technique
 (OHLC-to-order-flow reconstruction) for working backward from bar data when
 tick data isn't available, and the README says so explicitly rather than
 letting the "real data" framing overclaim.
 
-**The finding — real volatility clustering, measured, not assumed:**
+**The finding, real volatility clustering, measured, not assumed:**
 
 ```
 window                      bars    avg range (pts)     avg latency/order (ns)
@@ -112,7 +114,7 @@ Closing (15:15-15:30)       60      0.40                104
 
 The average 15-second price range was ~1.8x higher in the opening 15
 minutes than midday, and ~21x higher than the closing 15 minutes measured
-on this specific day — a real instance of the well-known opening-volatility
+on this specific day, a real instance of the well-known opening-volatility
 stylized fact, checked against actual data rather than cited from a
 textbook. Matching latency also runs slightly higher during the busier,
 more volatile open, though at these absolute latencies (~100-165ns) the
